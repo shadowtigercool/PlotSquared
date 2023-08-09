@@ -1,7 +1,7 @@
 import com.diffplug.gradle.spotless.SpotlessPlugin
 import com.github.jengelman.gradle.plugins.shadow.ShadowPlugin
-import java.net.URI
 import xyz.jpenilla.runpaper.task.RunServer
+import java.net.URI
 
 plugins {
     java
@@ -218,16 +218,18 @@ tasks.getByName<Jar>("jar") {
     enabled = false
 }
 
-val supportedVersions = listOf("1.16.5", "1.17", "1.17.1", "1.18.2", "1.19", "1.19.1", "1.19.2", "1.19.3", "1.19.4", "1.20")
+val supportedVersions = listOf("1.16.5", "1.17.1", "1.18.2", "1.19.4", "1.20.1")
 tasks {
-    supportedVersions.forEach {
-        register<RunServer>("runServer-$it") {
-            minecraftVersion(it)
-            pluginJars(*project(":plotsquared-bukkit").getTasksByName("shadowJar", false).map { (it as Jar).archiveFile }
+    supportedVersions.forEach { version ->
+        register<RunServer>("runServer-$version") {
+            minecraftVersion(version)
+            pluginJars(*project(":plotsquared-bukkit")
+                    .getTasksByName("shadowJar", false)
+                    .map { (it as Jar).archiveFile }
                     .toTypedArray())
             jvmArgs("-DPaper.IgnoreJavaVersion=true", "-Dcom.mojang.eula.agree=true")
             group = "run paper"
-            runDirectory.set(file("run-$it"))
+            runDirectory.set(file("run-$version"))
         }
     }
 }
