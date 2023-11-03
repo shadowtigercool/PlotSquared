@@ -135,6 +135,7 @@ import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -252,6 +253,7 @@ public final class BukkitPlatform extends JavaPlugin implements Listener, PlotPl
     }
 
     @Override
+    @SuppressWarnings("deprecation") // Paper deprecation
     public void onEnable() {
         this.pluginName = getDescription().getName();
 
@@ -550,7 +552,7 @@ public final class BukkitPlatform extends JavaPlugin implements Listener, PlotPl
         this.startMetrics();
 
         if (Settings.Enabled_Components.WORLDS) {
-            TaskManager.getPlatformImplementation().taskRepeat(this::unload, TaskTime.seconds(1L));
+            TaskManager.getPlatformImplementation().taskRepeat(this::unload, TaskTime.seconds(10L));
             try {
                 singleWorldListener = injector().getInstance(SingleWorldListener.class);
                 Bukkit.getPluginManager().registerEvents(singleWorldListener, this);
@@ -1160,6 +1162,7 @@ public final class BukkitPlatform extends JavaPlugin implements Listener, PlotPl
         return new BukkitPlotGenerator(world, generator, this.plotAreaManager);
     }
 
+    @SuppressWarnings("deprecation") // Paper deprecation
     @Override
     public @NonNull String pluginsFormatted() {
         StringBuilder msg = new StringBuilder();
@@ -1176,12 +1179,23 @@ public final class BukkitPlatform extends JavaPlugin implements Listener, PlotPl
                     .append("  • Load Before: ").append(p.getDescription().getLoadBefore()).append("\n")
                     .append("  • Dependencies: ").append(p.getDescription().getDepend()).append("\n")
                     .append("  • Soft Dependencies: ").append(p.getDescription().getSoftDepend()).append("\n");
+            List<RegisteredServiceProvider<?>> providers = Bukkit.getServicesManager().getRegistrations(p);
+            if (!providers.isEmpty()) {
+                msg.append("  • Provided Services: \n");
+                for (RegisteredServiceProvider<?> provider : providers) {
+                    msg.append("    • ")
+                            .append(provider.getService().getName()).append(" = ")
+                            .append(provider.getProvider().getClass().getName())
+                            .append(" (priority: ").append(provider.getPriority()).append(")")
+                            .append("\n");
+                }
+            }
         }
         return msg.toString();
     }
 
     @Override
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"ConstantConditions", "deprecation"}) // Paper deprecation
     public @NonNull String worldEditImplementations() {
         StringBuilder msg = new StringBuilder();
         if (Bukkit.getPluginManager().getPlugin("FastAsyncWorldEdit") != null) {
